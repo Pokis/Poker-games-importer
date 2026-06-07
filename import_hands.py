@@ -203,7 +203,7 @@ class HandParser:
             return
 
         # Collected from pot
-        match = re.search(r'^(.*?)\s+collected\s+\$?([\d\.]+)\s+from pot', line)
+        match = re.search(r'^(.*?)\s+collected\s+\$?([\d\.]+)\s+from .*pot', line)
         if match:
             player, amount = match.group(1), float(match.group(2))
             self.total_win[player] += amount
