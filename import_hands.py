@@ -60,7 +60,7 @@ class HandParser:
 
     def parse_file(self, filepath, conn):
         cursor = conn.cursor()
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, 'r', encoding='utf-8-sig') as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -70,6 +70,7 @@ class HandParser:
         # Save last hand if any
         if self.hand_number:
             self.save_hand(cursor)
+            self.reset_hand()
         conn.commit()
 
     def save_hand(self, cursor):
@@ -84,6 +85,7 @@ class HandParser:
             hero_rake = (self.total_win[self.hero] / self.total_pot) * self.hand_rake
 
         try:
+            print(f"Saving hand {self.hand_number} with net {net_result_chips}")
             cursor.execute('''
                 INSERT OR REPLACE INTO hands (
                     hand_number, tournament_number, buy_in, tournament_type, game_type, 
