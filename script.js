@@ -47,6 +47,13 @@ async function fetchData() {
         
         allHands = await response.json();
         
+        // Sort hands by hand_number sequentially
+        allHands.sort((a, b) => {
+            const numA = Number(a.hand_number) || 0;
+            const numB = Number(b.hand_number) || 0;
+            return numA - numB;
+        });
+        
         // Populate game type dropdown
         populateGameTypes(allHands);
         
@@ -215,7 +222,7 @@ function updateProfitChart(hands) {
         nonShowdownData.push(nonShowdownCumulative);
     });
 
-    const labels = hands.map((_, i) => `Hand ${i+1}`);
+    const labels = hands.map((h, i) => `Hand ${i+1} (ID: ${h.hand_number})`);
 
     if (profitChartInstance) {
         profitChartInstance.destroy();
@@ -321,7 +328,7 @@ function updateProfitBbChart(hands) {
         nonShowdownData.push(nonShowdownCumulative);
     });
 
-    const labels = hands.map((_, i) => `Hand ${i+1}`);
+    const labels = hands.map((h, i) => `Hand ${i+1} (ID: ${h.hand_number})`);
 
     if (profitBbChartInstance) {
         profitBbChartInstance.destroy();
