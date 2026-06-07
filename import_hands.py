@@ -212,6 +212,7 @@ def main():
     parser = argparse.ArgumentParser(description="Poker Hand History to SQLite Importer")
     parser.add_argument("paths", nargs="+", help="Hand history text files or directories to parse")
     parser.add_argument("--db", default="poker_hands.db", help="SQLite database file (default: poker_hands.db)")
+    parser.add_argument("--filter", default="HH*.txt", help="File pattern to match when scanning directories (default: HH*.txt)")
     args = parser.parse_args()
 
     db_path = Path(args.db)
@@ -230,7 +231,7 @@ def main():
         if p.is_file():
             files_to_parse.append(p)
         elif p.is_dir():
-            files_to_parse.extend(p.rglob("HH*.txt"))
+            files_to_parse.extend(p.rglob(args.filter))
             
     # De-duplicate files
     files_to_parse = list(set(files_to_parse))

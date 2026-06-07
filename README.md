@@ -24,9 +24,13 @@ python import_hands.py 'HH20260527 T4002467877 8-Game $50 + $5.txt'
 By default, this will create a SQLite database named `poker_hands.db` in the current directory and insert the parsed hands.
 
 ### Options
-You can optionally specify a custom path for the SQLite database:
+- `--db <filename>`: Specify a custom path for the SQLite database.
+- `--filter <pattern>`: Override the default file matching pattern when scanning directories (default is `HH*.txt`).
+
+Examples:
 ```bash
 python import_hands.py --db custom_poker.db 'HH20260527 T4002467877 8-Game $50 + $5.txt'
+python import_hands.py --filter "HH*Badugi.txt" "folder/with/hands"
 ```
 
 ## Running Tests
