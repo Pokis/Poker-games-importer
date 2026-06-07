@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>♠️ Poker Dash</h2>
+            </div>
+            
+            <div class="filter-section">
+                <h3>Filters</h3>
+                
+                <div class="filter-group">
+                    <label for="format-filter">Format</label>
+                    <select id="format-filter">
+                        <option value="All">All Formats</option>
+                        <option value="Tournament">Tournament</option>
+                        <option value="Cash">Cash Game</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="game-type-filter">Game Type</label>
+                    <select id="game-type-filter">
+                        <option value="All">All Game Types</option>
+                        <!-- Options injected by JS -->
+                    </select>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <button id="refresh-btn">Refresh Data</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <h1>Performance Overview</h1>
+                <p id="last-updated">Loading...</p>
+            </header>
+
+            <!-- Metric Cards -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-title">Total Hands</div>
+                    <div class="metric-value" id="val-total-hands">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Net Profit (Chips)</div>
+                    <div class="metric-value" id="val-net-chips">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Net Profit (BB)</div>
+                    <div class="metric-value" id="val-net-bb">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Rake Paid</div>
+                    <div class="metric-value" id="val-rake">-</div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <!-- Cumulative Profit Line Chart -->
+                <div class="chart-container span-2">
+                    <h3>Cumulative Profit (Chips)</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="profitChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Game Type Breakdown -->
+                <div class="chart-container">
+                    <h3>Profit by Game Type</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="gameTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

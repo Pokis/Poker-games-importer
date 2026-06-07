@@ -64,3 +64,21 @@ You can explore the generated SQLite database using any DB viewer (like DB Brows
 ```bash
 sqlite3 poker_hands.db "SELECT * FROM hands LIMIT 5;"
 ```
+
+## Visualization Dashboard
+
+The project includes a lightweight, zero-dependency local web dashboard that provides beautiful visual insights into your poker statistics directly from your SQLite database.
+
+### Running the Dashboard
+
+Simply run the included server script:
+```bash
+python server.py
+```
+
+The script will automatically find a free port on your machine and print the URL to the console (e.g., `http://localhost:53726`). Open this URL in your web browser.
+
+### Features
+- **Dynamic Metrics**: Instantly view Total Hands, Net Chips, BB, and Rake.
+- **Interactive Charts**: Includes a Cumulative Profit line chart and a Game Type breakdown bar chart powered by Chart.js.
+- **Live Filtering**: Use the sidebar to isolate stats by `Tournament` vs `Cash`, or drill down into specific game variants. The charts and metrics will recalculate dynamically on the fly.
