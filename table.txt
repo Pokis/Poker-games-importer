@@ -1,0 +1,9 @@
+hand number
+tournament number // if there is no tournament number write "CASH"
+buy-in // all dollar amounts written after tournament number summed up
+tournament type // type of tournament written after buy in amount
+game type // type of game being played which is the same as tournament type except when there is a mixed game tournament, at which point game being played is written in parentheses after tournament type
+Big bet / Big blind // written after level number in parenthesis, the higher number is the BB
+net result in chips // total win - chips put in the pot
+net result in BB // net result in chips divided by big bet or big blind
+rake // in case of cash games calculate rake as total win / total pot * rake
