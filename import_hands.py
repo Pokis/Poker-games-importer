@@ -132,20 +132,27 @@ class HandParser:
             return
 
         if line.startswith("Dealt to "):
-            match = re.search(r'Dealt to (.*?) \[', line)
+            match = re.search(r'Dealt to (.*?) \[[^\]]* [^\]]*\]', line)
             if match:
                 player = match.group(1)
                 if not self.hero:
                     self.hero = player
             return
 
-        if line.startswith("*** ") and line.endswith(" ***"):
-            if "DEALING HANDS" not in line and "SUMMARY" not in line and "SHOW DOWN" not in line:
+        if line.startswith("*** "):
+            if "DEALING HANDS" not in line and "SUMMARY" not in line and "SHOW DOWN" not in line and "HOLE CARDS" not in line:
                 self.new_street()
             return
 
+        # Action: posts the ante
+        match = re.search(r'^([^:]+):\s+posts the ante\s+\$?([\d\.]+)', line)
+        if match:
+            player, amount = match.group(1), float(match.group(2))
+            self.put_in[player] += amount
+            return
+
         # Action: posts
-        match = re.search(r'^([^:]+):\s+(?:posts|posts small & big blinds|posts small blind|posts big blind|posts the ante)\s+\$?([\d\.]+)', line)
+        match = re.search(r'^([^:]+):\s+(?:posts|posts small & big blinds|posts small blind|posts big blind)\s+\$?([\d\.]+)', line)
         if match:
             player, amount = match.group(1), float(match.group(2))
             self.put_in[player] += amount
