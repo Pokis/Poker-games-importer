@@ -1,11 +1,17 @@
 // Global State
 let allHands = [];
 let profitChartInstance = null;
+let profitBbChartInstance = null;
 let gameTypeChartInstance = null;
+let selectedGameTypes = new Set();
 
 // DOM Elements
 const formatFilter = document.getElementById('format-filter');
-const gameTypeFilter = document.getElementById('game-type-filter');
+const gameTypesList = document.getElementById('game-types-list');
+const selectAllBtn = document.getElementById('select-all-btn');
+const clearAllBtn = document.getElementById('clear-all-btn');
+const buyinMinInput = document.getElementById('buyin-min');
+const buyinMaxInput = document.getElementById('buyin-max');
 const refreshBtn = document.getElementById('refresh-btn');
 const lastUpdatedText = document.getElementById('last-updated');
 
@@ -17,7 +23,10 @@ const valRake = document.getElementById('val-rake');
 // Event Listeners
 refreshBtn.addEventListener('click', fetchData);
 formatFilter.addEventListener('change', updateDashboard);
-gameTypeFilter.addEventListener('change', updateDashboard);
+selectAllBtn.addEventListener('click', selectAllGameTypes);
+clearAllBtn.addEventListener('click', clearAllGameTypes);
+buyinMinInput.addEventListener('input', updateDashboard);
+buyinMaxInput.addEventListener('input', updateDashboard);
 
 // Setup Chart Colors
 Chart.defaults.color = '#94a3b8';
@@ -61,17 +70,59 @@ function populateGameTypes(hands) {
         if (h.game_type) types.add(h.game_type);
     });
     
-    // Keep the "All" option, remove the rest
-    while (gameTypeFilter.options.length > 1) {
-        gameTypeFilter.remove(1);
+    // Clear the current checkboxes in list
+    gameTypesList.innerHTML = '';
+    
+    const sortedTypes = Array.from(types).sort();
+    
+    // Initialize selectedGameTypes with all found types if empty
+    if (selectedGameTypes.size === 0) {
+        sortedTypes.forEach(t => selectedGameTypes.add(t));
     }
     
-    Array.from(types).sort().forEach(type => {
-        const option = document.createElement('option');
-        option.value = type;
-        option.textContent = type;
-        gameTypeFilter.appendChild(option);
+    sortedTypes.forEach(type => {
+        const label = document.createElement('label');
+        label.className = 'checkbox-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = type;
+        checkbox.checked = selectedGameTypes.has(type);
+        
+        checkbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                selectedGameTypes.add(type);
+            } else {
+                selectedGameTypes.delete(type);
+            }
+            updateDashboard();
+        });
+        
+        const span = document.createElement('span');
+        span.textContent = type;
+        
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        gameTypesList.appendChild(label);
     });
+}
+
+function selectAllGameTypes() {
+    const checkboxes = gameTypesList.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        cb.checked = true;
+        selectedGameTypes.add(cb.value);
+    });
+    updateDashboard();
+}
+
+function clearAllGameTypes() {
+    const checkboxes = gameTypesList.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        cb.checked = false;
+        selectedGameTypes.delete(cb.value);
+    });
+    updateDashboard();
 }
 
 function updateDashboard() {
@@ -79,17 +130,21 @@ function updateDashboard() {
 
     // Filter Data
     const selectedFormat = formatFilter.value;
-    const selectedGameType = gameTypeFilter.value;
+    const minBuyin = parseFloat(buyinMinInput.value);
+    const maxBuyin = parseFloat(buyinMaxInput.value);
 
     let filtered = allHands.filter(h => {
         let matchFormat = true;
         if (selectedFormat === 'Tournament') matchFormat = h.tournament_number !== 'CASH';
         if (selectedFormat === 'Cash') matchFormat = h.tournament_number === 'CASH';
         
-        let matchType = true;
-        if (selectedGameType !== 'All') matchType = h.game_type === selectedGameType;
+        const matchType = selectedGameTypes.has(h.game_type);
         
-        return matchFormat && matchType;
+        let matchBuyin = true;
+        if (!isNaN(minBuyin) && h.buy_in < minBuyin) matchBuyin = false;
+        if (!isNaN(maxBuyin) && h.buy_in > maxBuyin) matchBuyin = false;
+        
+        return matchFormat && matchType && matchBuyin;
     });
 
     // Update Metrics
@@ -97,6 +152,7 @@ function updateDashboard() {
     
     // Update Charts
     updateProfitChart(filtered);
+    updateProfitBbChart(filtered);
     updateGameTypeChart(filtered);
 }
 
@@ -139,16 +195,27 @@ function updateProfitChart(hands) {
     const ctx = document.getElementById('profitChart').getContext('2d');
     
     let cumulative = 0;
-    const dataPoints = hands.map((h, i) => {
-        cumulative += (h.net_result_chips || 0);
-        return cumulative;
+    let showdownCumulative = 0;
+    let nonShowdownCumulative = 0;
+    
+    const dataPoints = [];
+    const showdownData = [];
+    const nonShowdownData = [];
+    
+    hands.forEach(h => {
+        const net = h.net_result_chips || 0;
+        cumulative += net;
+        if (h.showdown) {
+            showdownCumulative += net;
+        } else {
+            nonShowdownCumulative += net;
+        }
+        dataPoints.push(cumulative);
+        showdownData.push(showdownCumulative);
+        nonShowdownData.push(nonShowdownCumulative);
     });
 
     const labels = hands.map((_, i) => `Hand ${i+1}`);
-    
-    const isPositive = cumulative >= 0;
-    const borderColor = isPositive ? '#10b981' : '#ef4444';
-    const bgColor = isPositive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
 
     if (profitChartInstance) {
         profitChartInstance.destroy();
@@ -158,23 +225,54 @@ function updateProfitChart(hands) {
         type: 'line',
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Cumulative Net (Chips)',
-                data: dataPoints,
-                borderColor: borderColor,
-                backgroundColor: bgColor,
-                borderWidth: 2,
-                pointRadius: 0,
-                pointHoverRadius: 4,
-                fill: true,
-                tension: 0.1
-            }]
+            datasets: [
+                {
+                    label: 'Overall Net (Chips)',
+                    data: dataPoints,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: true,
+                    tension: 0.1
+                },
+                {
+                    label: 'Showdown Winnings',
+                    data: showdownData,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.1
+                },
+                {
+                    label: 'Non-Showdown Winnings',
+                    data: nonShowdownData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.1
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 15
+                    }
+                },
                 tooltip: {
                     mode: 'index',
                     intersect: false,
@@ -182,7 +280,113 @@ function updateProfitChart(hands) {
             },
             scales: {
                 x: {
-                    display: false // hide individual hand labels for clean look
+                    display: false
+                },
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            }
+        }
+    });
+}
+
+function updateProfitBbChart(hands) {
+    const ctx = document.getElementById('profitBbChart').getContext('2d');
+    
+    let cumulative = 0;
+    let showdownCumulative = 0;
+    let nonShowdownCumulative = 0;
+    
+    const dataPoints = [];
+    const showdownData = [];
+    const nonShowdownData = [];
+    
+    hands.forEach(h => {
+        const net = h.net_result_bb || 0;
+        cumulative += net;
+        if (h.showdown) {
+            showdownCumulative += net;
+        } else {
+            nonShowdownCumulative += net;
+        }
+        dataPoints.push(cumulative);
+        showdownData.push(showdownCumulative);
+        nonShowdownData.push(nonShowdownCumulative);
+    });
+
+    const labels = hands.map((_, i) => `Hand ${i+1}`);
+
+    if (profitBbChartInstance) {
+        profitBbChartInstance.destroy();
+    }
+
+    profitBbChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Overall Net (BB)',
+                    data: dataPoints,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: true,
+                    tension: 0.1
+                },
+                {
+                    label: 'Showdown Winnings',
+                    data: showdownData,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.1
+                },
+                {
+                    label: 'Non-Showdown Winnings',
+                    data: nonShowdownData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                }
+            },
+            scales: {
+                x: {
+                    display: false
                 },
                 y: {
                     grid: {

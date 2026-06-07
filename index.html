@@ -28,11 +28,25 @@
                 </div>
                 
                 <div class="filter-group">
-                    <label for="game-type-filter">Game Type</label>
-                    <select id="game-type-filter">
-                        <option value="All">All Game Types</option>
-                        <!-- Options injected by JS -->
-                    </select>
+                    <div class="filter-label-row">
+                        <label>Game Types</label>
+                        <div class="filter-actions">
+                            <button type="button" id="select-all-btn">All</button>
+                            <button type="button" id="clear-all-btn">None</button>
+                        </div>
+                    </div>
+                    <div class="game-types-list" id="game-types-list">
+                        <!-- Checkboxes injected by JS -->
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Buy-in Range</label>
+                    <div class="range-inputs">
+                        <input type="number" id="buyin-min" placeholder="Min ($)" min="0" step="any">
+                        <span class="range-separator">to</span>
+                        <input type="number" id="buyin-max" placeholder="Max ($)" min="0" step="any">
+                    </div>
                 </div>
             </div>
             
@@ -71,7 +85,7 @@
             <!-- Charts Section -->
             <div class="charts-section">
                 <!-- Cumulative Profit Line Chart -->
-                <div class="chart-container span-2">
+                <div class="chart-container line-chart-container">
                     <h3>Cumulative Profit (Chips)</h3>
                     <div class="chart-wrapper">
                         <canvas id="profitChart"></canvas>
@@ -79,10 +93,18 @@
                 </div>
 
                 <!-- Game Type Breakdown -->
-                <div class="chart-container">
+                <div class="chart-container bar-chart-container">
                     <h3>Profit by Game Type</h3>
                     <div class="chart-wrapper">
                         <canvas id="gameTypeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Cumulative Profit Line Chart (BB) -->
+                <div class="chart-container line-chart-container">
+                    <h3>Cumulative Profit (BB)</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="profitBbChart"></canvas>
                     </div>
                 </div>
             </div>
